@@ -32,6 +32,20 @@ app.add_middleware(
 # Mount static files and templates
 templates = Jinja2Templates(directory="templates")
 
+# Helper function to convert datetime objects to JSON-serializable format
+def make_json_serializable(obj):
+    """
+    Recursively convert datetime objects to ISO format strings for JSON serialization
+    """
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    elif isinstance(obj, dict):
+        return {key: make_json_serializable(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [make_json_serializable(item) for item in obj]
+    else:
+        return obj
+
 # Dependency to check if user is authenticated
 def get_current_user(request: Request):
     if not request.session.get("is_authenticated"):
@@ -64,21 +78,12 @@ async def index(request: Request, message: Optional[str] = None):
     # Get all emails sorted by date
     emails = list(emails_collection.find().sort("created_at", -1))
 
-    # Keep datetime objects for server-side template rendering (so strftime works),
-    # but prepare a JSON-serializable copy for client-side JavaScript.
-    serializable_emails = []
+    # Prepare emails for template rendering
     for email in emails:
-        # Ensure _id is a string for templates
         email["_id"] = str(email["_id"])
 
-        # Create a shallow copy and convert datetimes to ISO strings for JS
-        ser = email.copy()
-        if isinstance(ser.get("created_at"), datetime):
-            ser["created_at"] = ser["created_at"].isoformat()
-        if isinstance(ser.get("received_at"), datetime):
-            ser["received_at"] = ser["received_at"].isoformat()
-
-        serializable_emails.append(ser)
+    # Create JSON-serializable version for client-side JavaScript
+    serializable_emails = [make_json_serializable(email) for email in emails]
 
     return templates.TemplateResponse(
         "inbox.html",
@@ -516,16 +521,14 @@ async def search_emails(
     # Execute query
     emails = list(emails_collection.find(query).sort("created_at", -1))
 
-    # Convert ObjectId to string
+    # Convert ObjectId to string and make JSON serializable
     for email in emails:
         email["_id"] = str(email["_id"])
-        # Convert datetime to ISO format
-        if isinstance(email.get("created_at"), datetime):
-            email["created_at"] = email["created_at"].isoformat()
-        if isinstance(email.get("received_at"), datetime):
-            email["received_at"] = email["received_at"].isoformat()
 
-    return JSONResponse({"emails": emails, "count": len(emails)})
+    # Convert all datetime objects to ISO format
+    serializable_emails = [make_json_serializable(email) for email in emails]
+
+    return JSONResponse({"emails": serializable_emails, "count": len(serializable_emails)})
 
 @app.post("/api/email/compose")
 async def compose_email(
