@@ -364,82 +364,41 @@
                 }
             }
 
-            // Display attachments if available
+            // Display attachments if available - simplified version using database data
             {% if email.attachments and email.attachments|length > 0 %}
-            try {
-                const attachmentsResponse = await fetch('/api/email/{{ email.email_id }}/attachments');
-                
-                if (attachmentsResponse.ok) {
-                    const attachmentsData = await attachmentsResponse.json();
-                    
-                    if (attachmentsData.data && attachmentsData.data.length > 0) {
-                        const attachmentsContainer = document.getElementById('attachmentsContainer');
-                        attachmentsContainer.innerHTML = `
-                            <div class="attachments">
-                                <div class="attachments-title">📎 Attachments (${attachmentsData.data.length})</div>
-                                ${attachmentsData.data.map(att => `
-                                    <div class="attachment-item">
-                                        <div class="attachment-icon">📄</div>
-                                        <div class="attachment-info">
-                                            <div class="attachment-name">${att.filename}</div>
-                                            <div class="attachment-type">${att.content_type} • ${formatFileSize(att.size)}</div>
-                                        </div>
-                                        <a href="/api/email/{{ email.email_id }}/attachments/${att.id}/download"
-                                           class="attachment-download">
-                                            Download
-                                        </a>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        `;
-                    }
-                } else {
-                    // Fallback to database attachments
-                    const dbAttachments = {{ email.attachments | tojson }};
-                    if (dbAttachments && dbAttachments.length > 0) {
-                        const attachmentsContainer = document.getElementById('attachmentsContainer');
-                        attachmentsContainer.innerHTML = `
-                            <div class="attachments">
-                                <div class="attachments-title">📎 Attachments (${dbAttachments.length})</div>
-                                ${dbAttachments.map(att => `
-                                    <div class="attachment-item">
-                                        <div class="attachment-icon">📄</div>
-                                        <div class="attachment-info">
-                                            <div class="attachment-name">${att.filename || 'Attachment'}</div>
-                                            <div class="attachment-type">${att.content_type || 'Unknown type'}</div>
-                                        </div>
-                                        <a href="/api/email/{{ email.email_id }}/attachments/${att.id}/download"
-                                           class="attachment-download">
-                                            Download
-                                        </a>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        `;
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading attachments:', error);
-                // Fallback to database attachments
-                const dbAttachments = {{ email.attachments | tojson }};
-                if (dbAttachments && dbAttachments.length > 0) {
-                    const attachmentsContainer = document.getElementById('attachmentsContainer');
-                    attachmentsContainer.innerHTML = `
-                        <div class="attachments">
-                            <div class="attachments-title">📎 Attachments (${dbAttachments.length})</div>
-                            ${dbAttachments.map(att => `
+            const dbAttachments = {{ email.attachments | tojson }};
+            console.log('Attachments from database:', dbAttachments);
+            
+            if (dbAttachments && dbAttachments.length > 0) {
+                const attachmentsContainer = document.getElementById('attachmentsContainer');
+                attachmentsContainer.innerHTML = `
+                    <div class="attachments">
+                        <div class="attachments-title">📎 Attachments (${dbAttachments.length})</div>
+                        ${dbAttachments.map(att => {
+                            const filename = att.filename || 'Unknown file';
+                            const contentType = att.content_type || 'Unknown type';
+                            const attachmentId = att.id || '';
+                            
+                            return `
                                 <div class="attachment-item">
                                     <div class="attachment-icon">📄</div>
                                     <div class="attachment-info">
-                                        <div class="attachment-name">${att.filename || 'Attachment'}</div>
-                                        <div class="attachment-type">${att.content_type || 'Unknown type'}</div>
+                                        <div class="attachment-name">${filename}</div>
+                                        <div class="attachment-type">${contentType}</div>
                                     </div>
-                                    ${att.id ? `<a href="/api/email/{{ email.email_id }}/attachments/${att.id}/download" class="attachment-download">Download</a>` : ''}
+                                    ${attachmentId ? 
+                                        `<a href="/api/email/{{ email.email_id }}/attachments/${attachmentId}/download"
+                                           class="attachment-download"
+                                           onclick="return downloadAttachment(event, '${attachmentId}', '${filename}')">
+                                            Download
+                                        </a>` : 
+                                        '<span style="color: #666; font-size: 12px;">Download unavailable</span>'
+                                    }
                                 </div>
-                            `).join('')}
-                        </div>
-                    `;
-                }
+                            `;
+                        }).join('')}
+                    </div>
+                `;
             }
             {% endif %}
         });
@@ -450,6 +409,17 @@
             const sizes = ['Bytes', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        async function downloadAttachment(event, attachmentId, filename) {
+            event.preventDefault();
+            console.log('Downloading attachment:', attachmentId, filename);
+            
+            // Simply navigate to the download URL - the server will redirect to Resend CDN
+            const emailId = '{{ email.email_id }}';
+            window.location.href = `/api/email/${emailId}/attachments/${attachmentId}/download`;
+            
+            return false;
         }
 
         async function sendReply(event) {

@@ -450,35 +450,45 @@ async def get_email_attachments(request: Request, email_id: str):
     user = require_auth(request)
 
     try:
+        print(f"Fetching attachments for email {email_id}")
         attachments = resend_service.get_email_attachments(email_id)
+        print(f"Attachments response: {attachments}")
         return JSONResponse(attachments)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Error fetching attachments: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to fetch attachments: {str(e)}")
 
 @app.get("/api/email/{email_id}/attachments/{attachment_id}/download")
 async def download_attachment(request: Request, email_id: str, attachment_id: str):
     """
-    Download a specific attachment
+    Download a specific attachment by redirecting to Resend CDN
     """
     user = require_auth(request)
 
     try:
-        # Get attachment details including download URL
+        print(f"Attempting to download attachment {attachment_id} from email {email_id}")
+        
+        # Get attachment details including download URL from Resend API
         attachment_info = resend_service.get_attachment(email_id, attachment_id)
+        print(f"Attachment info: {attachment_info}")
 
-        # Download the attachment content
-        content = resend_service.download_attachment(attachment_info["download_url"])
-
-        # Return as streaming response
-        return StreamingResponse(
-            io.BytesIO(content),
-            media_type=attachment_info.get("content_type", "application/octet-stream"),
-            headers={
-                "Content-Disposition": f'attachment; filename="{attachment_info.get("filename", "download")}"'
-            }
-        )
+        # Get the download URL from the response
+        download_url = attachment_info.get('download_url')
+        if not download_url:
+            raise HTTPException(status_code=404, detail="Download URL not found")
+        
+        print(f"Redirecting to download URL: {download_url}")
+        
+        # Redirect to the Resend CDN download URL
+        return RedirectResponse(url=download_url)
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Error downloading attachment: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to download attachment: {str(e)}")
 
 @app.get("/api/emails/search")
 async def search_emails(
