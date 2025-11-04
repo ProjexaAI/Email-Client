@@ -111,7 +111,7 @@ Before you begin, ensure you have:
    - Add your Resend API key
    - (Optional) Configure Cloudflare R2 credentials for attachments
 
-🎉 **That's it!** Your email client is now ready to use.
+**That's it!** Your email client is now ready to use.
 
 ### Installation (Manual)
 
@@ -448,35 +448,16 @@ flake8 .
 
 ---
 
-## Roadmap
-
-- [ ] Email search and filtering
-- [ ] Email folders/labels
-- [ ] Rich text editor for composing emails
-- [ ] Multiple email account support
-- [ ] Email templates
-- [ ] Auto-responders
-- [ ] Email forwarding rules
-- [ ] Two-factor authentication
-- [ ] API documentation (OpenAPI/Swagger)
-- [ ] Mobile responsive improvements
-- [ ] Dark mode
-- [ ] Email signatures
-- [ ] Scheduled emails
-- [ ] Email analytics
-
----
-
 ## Contributing
 
 We welcome contributions from the community! Here's how you can help:
 
 ### Ways to Contribute
 
-- 🐛 **Report Bugs**: Open an issue with details about the bug
-- 💡 **Suggest Features**: Share your ideas for new features
-- 📖 **Improve Documentation**: Help make the docs better
-- 🔧 **Submit Pull Requests**: Fix bugs or add features
+- **Report Bugs**: Open an issue with details about the bug
+- **Suggest Features**: Share your ideas for new features
+- **Improve Documentation**: Help make the docs better
+- **Submit Pull Requests**: Fix bugs or add features
 
 ### Contribution Guidelines
 
@@ -498,13 +479,13 @@ Please ensure your PR:
 
 ### Getting Help
 
-- 📖 **Documentation**: Check [DEPLOYMENT.md](DEPLOYMENT.md) for detailed guides
-- 💬 **Issues**: Open a [GitHub issue](https://github.com/yourusername/simple-email-client/issues)
-- 🐛 **Bug Reports**: Use the issue tracker with the bug label
+- **Documentation**: Check [DEPLOYMENT.md](DEPLOYMENT.md) for detailed guides
+- **Issues**: Open a [GitHub issue](https://github.com/yourusername/simple-email-client/issues)
+- **Bug Reports**: Use the issue tracker with the bug label
 
 ### Community
 
-- Star ⭐ this repository if you find it useful
+- Star this repository if you find it useful
 - Share with others who might benefit
 - Contribute to make it better
 
@@ -549,10 +530,10 @@ copies or substantial portions of the Software.
 
 <div align="center">
 
-### Part of [Projexa.ai](https://projexa.ai) Open Source Initiative
+### Part of [Projexa AI](https://projexa.ai) Open Source Initiative
 
 Built with ❤️ by the open-source community
 
-**[⬆ Back to Top](#simple-email-client)**
+**[Back to Top](#simple-email-client)**
 
 </div>
