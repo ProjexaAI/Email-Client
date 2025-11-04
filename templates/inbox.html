@@ -12,73 +12,141 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background-color: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #ffffff;
+            color: #000000;
         }
 
         .header {
-            background: white;
-            border-bottom: 1px solid #e0e0e0;
-            padding: 16px 24px;
+            background: #000000;
+            color: #ffffff;
+            padding: 20px 32px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 2px solid #000000;
         }
 
         .header h1 {
-            font-size: 20px;
-            color: #333;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
 
         .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .user-info span {
             font-size: 14px;
-            color: #666;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
         }
 
         .header-btn {
-            padding: 8px 16px;
-            background-color: #f0f0f0;
-            color: #333;
+            padding: 10px 20px;
+            background-color: #ffffff;
+            color: #000000;
             text-decoration: none;
-            border-radius: 6px;
+            border-radius: 4px;
             font-size: 14px;
-            transition: background-color 0.2s;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: 2px solid #ffffff;
         }
 
         .header-btn:hover {
-            background-color: #e0e0e0;
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .header-btn.primary {
+            background-color: #ffffff;
+            color: #000000;
+            border: 2px solid #ffffff;
+        }
+
+        .header-btn.primary:hover {
+            background-color: transparent;
+            color: #ffffff;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+            padding: 32px;
+        }
+
+        .search-bar {
+            background: #ffffff;
+            border: 2px solid #000000;
+            border-radius: 4px;
             padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #000000;
+            border-radius: 4px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .filters {
+            margin-top: 16px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filter-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .filter-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            border: 2px solid #000000;
         }
 
         .email-list {
-            background: white;
-            border-radius: 8px;
+            background: #ffffff;
+            border: 2px solid #000000;
+            border-radius: 4px;
             overflow: hidden;
         }
 
         .email-item {
-            padding: 16px 24px;
-            border-bottom: 1px solid #f0f0f0;
+            padding: 24px;
+            border-bottom: 1px solid #e0e0e0;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
             text-decoration: none;
             display: block;
             color: inherit;
+            position: relative;
         }
 
         .email-item:hover {
-            background-color: #fafafa;
+            background-color: #f5f5f5;
         }
 
         .email-item:last-child {
@@ -86,72 +154,154 @@
         }
 
         .email-item.unread {
-            font-weight: 500;
+            background-color: #fafafa;
+            border-left: 4px solid #000000;
+        }
+
+        .email-item.unread:hover {
+            background-color: #f0f0f0;
         }
 
         .email-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
+            align-items: flex-start;
+            margin-bottom: 12px;
         }
 
         .email-from {
-            font-size: 14px;
-            color: #333;
+            font-size: 15px;
+            font-weight: 600;
+            color: #000000;
         }
 
         .email-date {
-            font-size: 12px;
-            color: #999;
+            font-size: 13px;
+            color: #666666;
+            white-space: nowrap;
+            margin-left: 16px;
         }
 
         .email-subject {
             font-size: 14px;
-            color: #666;
-            margin-bottom: 4px;
+            color: #000000;
+            margin-bottom: 12px;
+            font-weight: 500;
         }
 
-        .email-badges {
+        .email-preview {
+            font-size: 13px;
+            color: #666666;
+            margin-bottom: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .email-meta {
             display: flex;
-            gap: 8px;
-            margin-top: 8px;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
         }
 
         .badge {
-            font-size: 11px;
-            padding: 2px 8px;
-            border-radius: 3px;
-            background-color: #f0f0f0;
-            color: #666;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .badge.attachment {
-            background-color: #e3f2fd;
-            color: #1976d2;
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .badge.replied {
+            background-color: #ffffff;
+            color: #000000;
+            border: 1px solid #000000;
+        }
+
+        .badge.unread-indicator {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .attachment-list {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .attachment-item {
+            font-size: 12px;
+            padding: 4px 10px;
+            background-color: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .attachment-icon {
+            font-size: 10px;
         }
 
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            color: #999;
+            padding: 80px 20px;
+            color: #666666;
         }
 
         .empty-state h2 {
-            font-size: 18px;
+            font-size: 20px;
             margin-bottom: 8px;
+            color: #000000;
         }
 
         .empty-state p {
             font-size: 14px;
+        }
+
+        .refresh-indicator {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #000000;
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 4px;
+            font-size: 13px;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .refresh-indicator.show {
+            display: block;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .refreshing {
+            animation: pulse 1.5s ease-in-out infinite;
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>Inbox</h1>
-        <div class="user-info">
-            <span>{{ user.username }}</span>
-            <a href="/compose" class="header-btn">Compose</a>
+        <div class="header-actions">
+            <div class="user-info">{{ user.username }}</div>
+            <a href="/compose" class="header-btn primary">Compose</a>
             {% if user.is_admin %}
             <a href="/settings" class="header-btn">Settings</a>
             {% endif %}
@@ -160,21 +310,24 @@
     </div>
 
     <div class="container">
-        <div style="background: white; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-            <input type="text" id="searchInput" placeholder="Search emails by sender, subject, or recipient..."
-                   style="width: 100%; padding: 10px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 14px;"
+        <div class="search-bar">
+            <input type="text" 
+                   id="searchInput" 
+                   class="search-input"
+                   placeholder="Search emails by sender, subject, or recipient..."
                    onkeyup="searchEmails()">
-            <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-                <label style="display: flex; align-items: center; gap: 4px; font-size: 14px;">
+            <div class="filters">
+                <label class="filter-label">
                     <input type="checkbox" id="filterUnread" onchange="searchEmails()">
                     Unread only
                 </label>
-                <label style="display: flex; align-items: center; gap: 4px; font-size: 14px;">
+                <label class="filter-label">
                     <input type="checkbox" id="filterAttachments" onchange="searchEmails()">
                     With attachments
                 </label>
             </div>
         </div>
+        
         <div class="email-list" id="emailList">
             {% if emails %}
                 {% for email in emails %}
@@ -184,14 +337,35 @@
                         <div class="email-date">{{ email.created_at.strftime('%b %d, %Y %I:%M %p') }}</div>
                     </div>
                     <div class="email-subject">{{ email.subject }}</div>
-                    <div class="email-badges">
-                        {% if email.attachments %}
-                        <span class="badge attachment">{{ email.attachments|length }} attachment(s)</span>
+                    {% if email.text %}
+                    <div class="email-preview">{{ email.text[:100] }}{% if email.text|length > 100 %}...{% endif %}</div>
+                    {% endif %}
+                    <div class="email-meta">
+                        {% if not email.is_read %}
+                        <span class="badge unread-indicator">NEW</span>
+                        {% endif %}
+                        {% if email.attachments and email.attachments|length > 0 %}
+                        <span class="badge attachment">
+                            📎 {{ email.attachments|length }} attachment{{ 's' if email.attachments|length > 1 else '' }}
+                        </span>
                         {% endif %}
                         {% if email.is_replied %}
-                        <span class="badge">Replied</span>
+                        <span class="badge replied">↩ Replied</span>
                         {% endif %}
                     </div>
+                    {% if email.attachments and email.attachments|length > 0 %}
+                    <div class="attachment-list">
+                        {% for attachment in email.attachments[:3] %}
+                        <div class="attachment-item">
+                            <span class="attachment-icon">📄</span>
+                            {{ attachment.filename }}
+                        </div>
+                        {% endfor %}
+                        {% if email.attachments|length > 3 %}
+                        <div class="attachment-item">+{{ email.attachments|length - 3 }} more</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                 </a>
                 {% endfor %}
             {% else %}
@@ -203,9 +377,15 @@
         </div>
     </div>
 
+    <div class="refresh-indicator" id="refreshIndicator">
+        Refreshing inbox...
+    </div>
+
     <script>
-    // Use the JSON-serializable copy from the server for client-side operations
-    let allEmails = {{ emails_json | tojson }};
+        // Use the JSON-serializable copy from the server for client-side operations
+        let allEmails = {{ emails_json | tojson }};
+        let refreshInterval;
+        let isRefreshing = false;
 
         function searchEmails() {
             const searchQuery = document.getElementById('searchInput').value;
@@ -258,29 +438,106 @@
                     hour12: true
                 });
 
+                const unreadClass = !email.is_read ? 'unread' : '';
+                const unreadBadge = !email.is_read ? '<span class="badge unread-indicator">NEW</span>' : '';
+                
                 const attachmentBadge = email.attachments && email.attachments.length > 0
-                    ? `<span class="badge attachment">${email.attachments.length} attachment(s)</span>`
+                    ? `<span class="badge attachment">📎 ${email.attachments.length} attachment${email.attachments.length > 1 ? 's' : ''}</span>`
                     : '';
 
                 const repliedBadge = email.is_replied
-                    ? '<span class="badge">Replied</span>'
+                    ? '<span class="badge replied">↩ Replied</span>'
                     : '';
 
+                const emailPreview = email.text 
+                    ? `<div class="email-preview">${email.text.substring(0, 100)}${email.text.length > 100 ? '...' : ''}</div>`
+                    : '';
+
+                let attachmentList = '';
+                if (email.attachments && email.attachments.length > 0) {
+                    const visibleAttachments = email.attachments.slice(0, 3);
+                    const attachmentItems = visibleAttachments.map(att => 
+                        `<div class="attachment-item"><span class="attachment-icon">📄</span>${att.filename}</div>`
+                    ).join('');
+                    
+                    const moreCount = email.attachments.length > 3 
+                        ? `<div class="attachment-item">+${email.attachments.length - 3} more</div>`
+                        : '';
+                    
+                    attachmentList = `<div class="attachment-list">${attachmentItems}${moreCount}</div>`;
+                }
+
                 return `
-                    <a href="/email/${email.email_id}" class="email-item ${!email.is_read ? 'unread' : ''}">
+                    <a href="/email/${email.email_id}" class="email-item ${unreadClass}">
                         <div class="email-header">
                             <div class="email-from">${email.from}</div>
                             <div class="email-date">${formattedDate}</div>
                         </div>
                         <div class="email-subject">${email.subject}</div>
-                        <div class="email-badges">
+                        ${emailPreview}
+                        <div class="email-meta">
+                            ${unreadBadge}
                             ${attachmentBadge}
                             ${repliedBadge}
                         </div>
+                        ${attachmentList}
                     </a>
                 `;
             }).join('');
         }
+
+        // Auto-refresh functionality
+        async function refreshInbox() {
+            if (isRefreshing) return;
+            
+            isRefreshing = true;
+            const indicator = document.getElementById('refreshIndicator');
+            indicator.classList.add('show', 'refreshing');
+
+            try {
+                const response = await fetch('/api/emails/search');
+                const data = await response.json();
+                
+                // Update the emails array
+                allEmails = data.emails;
+                
+                // Re-apply current filters
+                searchEmails();
+                
+                console.log('Inbox refreshed:', new Date().toLocaleTimeString());
+            } catch (error) {
+                console.error('Error refreshing inbox:', error);
+            } finally {
+                setTimeout(() => {
+                    indicator.classList.remove('show', 'refreshing');
+                    isRefreshing = false;
+                }, 1000);
+            }
+        }
+
+        // Start auto-refresh every 30 seconds
+        function startAutoRefresh() {
+            // Initial refresh after 30 seconds
+            refreshInterval = setInterval(refreshInbox, 30000);
+        }
+
+        // Stop auto-refresh (if needed)
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        }
+
+        // Start auto-refresh when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            startAutoRefresh();
+            console.log('Auto-refresh enabled: Inbox will refresh every 30 seconds');
+        });
+
+        // Stop refresh when user leaves the page
+        window.addEventListener('beforeunload', () => {
+            stopAutoRefresh();
+        });
     </script>
 </body>
 </html>
