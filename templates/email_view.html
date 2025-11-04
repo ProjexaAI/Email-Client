@@ -261,7 +261,13 @@
             </div>
 
             <div class="email-body" id="emailBody">
-                <p style="color: #999;">Loading email content...</p>
+                {% if email.html %}
+                    {{ email.html|safe }}
+                {% elif email.text %}
+                    <pre style="white-space: pre-wrap; font-family: inherit;">{{ email.text }}</pre>
+                {% else %}
+                    <p style="color: #999;">Loading email content...</p>
+                {% endif %}
             </div>
 
             <div id="attachmentsContainer"></div>
@@ -281,53 +287,63 @@
     </div>
 
     <script>
-        // Fetch full email content on page load
+        // Fetch full email content on page load if not already in MongoDB
         window.addEventListener('DOMContentLoaded', async () => {
-            try {
-                // Fetch full email content
-                const contentResponse = await fetch('/api/email/{{ email.email_id }}/content');
-                const emailData = await contentResponse.json();
+            const emailBody = document.getElementById('emailBody');
+            
+            // Check if email content is already loaded from MongoDB
+            const hasContent = emailBody.textContent.trim() !== 'Loading email content...';
+            
+            if (!hasContent) {
+                try {
+                    // Fetch full email content from Resend API
+                    const contentResponse = await fetch('/api/email/{{ email.email_id }}/content');
+                    const emailData = await contentResponse.json();
 
-                // Display email body
-                const emailBody = document.getElementById('emailBody');
-                if (emailData.html) {
-                    emailBody.innerHTML = emailData.html;
-                } else if (emailData.text) {
-                    emailBody.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${emailData.text}</pre>`;
-                } else {
-                    emailBody.innerHTML = '<p style="color: #999;">No email content available.</p>';
+                    // Display email body
+                    if (emailData.html) {
+                        emailBody.innerHTML = emailData.html;
+                    } else if (emailData.text) {
+                        emailBody.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${emailData.text}</pre>`;
+                    } else {
+                        emailBody.innerHTML = '<p style="color: #999;">No email content available.</p>';
+                    }
+                } catch (error) {
+                    console.error('Error loading email content:', error);
+                    emailBody.innerHTML = '<p style="color: #dc3545;">Failed to load email content.</p>';
                 }
-
-                // Fetch and display attachments
-                if (emailData.attachments && emailData.attachments.length > 0) {
-                    const attachmentsResponse = await fetch('/api/email/{{ email.email_id }}/attachments');
-                    const attachmentsData = await attachmentsResponse.json();
-
-                    const attachmentsContainer = document.getElementById('attachmentsContainer');
-                    attachmentsContainer.innerHTML = `
-                        <div class="attachments">
-                            <div class="attachments-title">Attachments (${attachmentsData.data.length})</div>
-                            ${attachmentsData.data.map(att => `
-                                <div class="attachment-item">
-                                    <div class="attachment-icon">FILE</div>
-                                    <div class="attachment-info">
-                                        <div class="attachment-name">${att.filename}</div>
-                                        <div class="attachment-type">${att.content_type} • ${formatFileSize(att.size)}</div>
-                                    </div>
-                                    <a href="/api/email/{{ email.email_id }}/attachments/${att.id}/download"
-                                       class="btn btn-primary"
-                                       style="padding: 6px 12px; text-decoration: none; font-size: 12px;">
-                                        Download
-                                    </a>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                console.error('Error loading email content:', error);
-                document.getElementById('emailBody').innerHTML = '<p style="color: #dc3545;">Failed to load email content.</p>';
             }
+
+            // Display attachments if available
+            {% if email.attachments and email.attachments|length > 0 %}
+            try {
+                const attachmentsResponse = await fetch('/api/email/{{ email.email_id }}/attachments');
+                const attachmentsData = await attachmentsResponse.json();
+
+                const attachmentsContainer = document.getElementById('attachmentsContainer');
+                attachmentsContainer.innerHTML = `
+                    <div class="attachments">
+                        <div class="attachments-title">Attachments (${attachmentsData.data.length})</div>
+                        ${attachmentsData.data.map(att => `
+                            <div class="attachment-item">
+                                <div class="attachment-icon">FILE</div>
+                                <div class="attachment-info">
+                                    <div class="attachment-name">${att.filename}</div>
+                                    <div class="attachment-type">${att.content_type} • ${formatFileSize(att.size)}</div>
+                                </div>
+                                <a href="/api/email/{{ email.email_id }}/attachments/${att.id}/download"
+                                   class="btn btn-primary"
+                                   style="padding: 6px 12px; text-decoration: none; font-size: 12px;">
+                                    Download
+                                </a>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading attachments:', error);
+            }
+            {% endif %}
         });
 
         function formatFileSize(bytes) {

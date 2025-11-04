@@ -68,6 +68,7 @@ def get_settings():
         settings = {
             "type": "app_settings",
             "resend_api_key": "",
+            "send_from_email": "onboarding@resend.dev",
             "r2_account_id": "",
             "r2_access_key_id": "",
             "r2_secret_access_key": "",

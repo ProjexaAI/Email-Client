@@ -195,6 +195,7 @@ async def settings_page(request: Request, message: Optional[str] = None):
 async def update_api_settings(
     request: Request,
     resend_api_key: str = Form(...),
+    send_from_email: str = Form("onboarding@resend.dev"),
     r2_account_id: str = Form(""),
     r2_access_key_id: str = Form(""),
     r2_secret_access_key: str = Form(""),
@@ -205,6 +206,7 @@ async def update_api_settings(
 
     settings_data = {
         "resend_api_key": resend_api_key,
+        "send_from_email": send_from_email,
         "r2_account_id": r2_account_id,
         "r2_access_key_id": r2_access_key_id,
         "r2_secret_access_key": r2_secret_access_key,
@@ -260,46 +262,60 @@ async def receive_email(request: Request):
             return {"status": "ignored"}
 
         email_data = payload["data"]
+        email_id = email_data.get("email_id")
+
+        # Fetch the full email content from Resend API
+        try:
+            full_email = resend_service.get_email(email_id)
+        except Exception as e:
+            print(f"Error fetching full email content: {e}")
+            # Continue with webhook data if API fetch fails
+            full_email = email_data
 
         # Process attachments and upload to R2
         attachments = []
-        if email_data.get("attachments"):
-            for attachment in email_data["attachments"]:
+        if full_email.get("attachments"):
+            for attachment in full_email["attachments"]:
                 try:
                     attachments.append({
-                        "id": attachment["id"],
-                        "filename": attachment["filename"],
-                        "content_type": attachment["content_type"],
+                        "id": attachment.get("id"),
+                        "filename": attachment.get("filename"),
+                        "content_type": attachment.get("content_type"),
                         "content_disposition": attachment.get("content_disposition"),
                         "content_id": attachment.get("content_id"),
                     })
                 except Exception as e:
                     print(f"Error processing attachment: {e}")
 
-        # Store email in MongoDB
+        # Store email in MongoDB with full content
         email_doc = {
-            "email_id": email_data["email_id"],
-            "created_at": datetime.fromisoformat(email_data["created_at"].replace("Z", "+00:00")),
-            "from": email_data["from"],
-            "to": email_data["to"],
-            "cc": email_data.get("cc", []),
-            "bcc": email_data.get("bcc", []),
-            "subject": email_data["subject"],
-            "message_id": email_data.get("message_id"),
+            "email_id": email_id,
+            "created_at": datetime.fromisoformat(full_email.get("created_at", email_data.get("created_at")).replace("Z", "+00:00")),
+            "from": full_email.get("from", email_data.get("from")),
+            "to": full_email.get("to", email_data.get("to")),
+            "cc": full_email.get("cc", []),
+            "bcc": full_email.get("bcc", []),
+            "reply_to": full_email.get("reply_to", []),
+            "subject": full_email.get("subject", email_data.get("subject")),
+            "html": full_email.get("html", ""),
+            "text": full_email.get("text", ""),
+            "message_id": full_email.get("message_id"),
+            "headers": full_email.get("headers", {}),
             "attachments": attachments,
             "is_read": False,
             "is_replied": False,
-            "received_at": datetime.now()
+            "received_at": datetime.now(),
+            "reply_history": []  # Track all replies sent to this email
         }
 
         # Insert or update email
         emails_collection.update_one(
-            {"email_id": email_data["email_id"]},
+            {"email_id": email_id},
             {"$set": email_doc},
             upsert=True
         )
 
-        return {"status": "success", "email_id": email_data["email_id"]}
+        return {"status": "success", "email_id": email_id}
 
     except Exception as e:
         print(f"Error processing webhook: {e}")
@@ -346,17 +362,50 @@ async def reply_to_email(
         else:
             sender_email = from_email
 
-        # Send reply using Resend
+        # Get configured send from email
+        settings = get_settings()
+        configured_from_email = settings.get("send_from_email", "onboarding@resend.dev")
+
+        # Get message_id for threading
+        message_id = email.get("message_id")
+        if not message_id:
+            raise Exception("Original email has no message_id for threading")
+
+        # Get previous references from email headers or reply history
+        references = []
+        if email.get("headers") and email["headers"].get("References"):
+            # Parse existing references
+            references = email["headers"]["References"].split()
+        
+        # Get previous reply message IDs from reply history
+        if email.get("reply_history"):
+            for reply in email["reply_history"]:
+                if reply.get("message_id"):
+                    references.append(reply["message_id"])
+
+        # Send reply using Resend with proper threading
         result = resend_service.reply_to_email(
             original_from=sender_email,
             subject=email["subject"],
-            html=f"<p>{reply_content}</p>"
+            html=f"<p>{reply_content}</p>",
+            message_id=message_id,
+            from_email=configured_from_email,
+            references=references if references else None
         )
 
-        # Mark email as replied
+        # Update email with reply information
+        reply_info = {
+            "replied_at": datetime.now(),
+            "replied_by": user["username"],
+            "message_id": result.get("id")
+        }
+
         emails_collection.update_one(
             {"email_id": email_id},
-            {"$set": {"is_replied": True}}
+            {
+                "$set": {"is_replied": True},
+                "$push": {"reply_history": reply_info}
+            }
         )
 
         return JSONResponse({"status": "success", "message": "Reply sent successfully"})
@@ -481,12 +530,14 @@ async def search_emails(
 @app.post("/api/email/compose")
 async def compose_email(
     request: Request,
-    to_emails: List[str] = Form(...),
+    to_emails: str = Form(...),  # Changed to string to handle JSON array
     subject: str = Form(...),
     html_content: str = Form(...),
-    cc: Optional[List[str]] = Form(None),
-    bcc: Optional[List[str]] = Form(None),
-    from_email: Optional[str] = Form(None)
+    cc: Optional[str] = Form(None),
+    bcc: Optional[str] = Form(None),
+    from_email: Optional[str] = Form(None),
+    text_content: Optional[str] = Form(None),
+    reply_to: Optional[str] = Form(None)
 ):
     """
     Compose and send a new email to specified recipients
@@ -494,15 +545,55 @@ async def compose_email(
     user = require_auth(request)
 
     try:
-        # Use configured from email or default
-        sender_email = from_email if from_email else "onboarding@resend.dev"
+        # Parse email addresses (can be comma-separated or JSON array)
+        import json
+        
+        # Parse to_emails
+        try:
+            to_list = json.loads(to_emails)
+        except:
+            to_list = [email.strip() for email in to_emails.split(",")]
+
+        # Parse cc if provided
+        cc_list = None
+        if cc:
+            try:
+                cc_list = json.loads(cc)
+            except:
+                cc_list = [email.strip() for email in cc.split(",")]
+
+        # Parse bcc if provided
+        bcc_list = None
+        if bcc:
+            try:
+                bcc_list = json.loads(bcc)
+            except:
+                bcc_list = [email.strip() for email in bcc.split(",")]
+
+        # Parse reply_to if provided
+        reply_to_address = None
+        if reply_to:
+            try:
+                reply_to_list = json.loads(reply_to)
+                reply_to_address = reply_to_list[0] if reply_to_list else None
+            except:
+                reply_to_address = reply_to.strip()
+
+        # Get configured send from email if not provided
+        if not from_email:
+            settings = get_settings()
+            from_email = settings.get("send_from_email", "onboarding@resend.dev")
 
         # Send email using Resend
         result = resend_service.send_email(
-            to=to_emails,
+            to=to_list,
             subject=subject,
             html=html_content,
-            from_email=sender_email
+            text=text_content,
+            from_email=from_email,
+            cc=cc_list,
+            bcc=bcc_list,
+            reply_to=reply_to_address
         )
 
         return JSONResponse({

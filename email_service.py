@@ -18,7 +18,12 @@ class ResendService:
         html: str,
         from_email: str = "onboarding@resend.dev",
         reply_to: Optional[str] = None,
-        attachments: Optional[List[dict]] = None
+        attachments: Optional[List[dict]] = None,
+        cc: Optional[List[str]] = None,
+        bcc: Optional[List[str]] = None,
+        text: Optional[str] = None,
+        email_headers: Optional[dict] = None,
+        tags: Optional[List[dict]] = None
     ) -> dict:
         """
         Send an email using Resend API
@@ -39,11 +44,26 @@ class ResendService:
             "html": html
         }
 
+        if text:
+            payload["text"] = text
+
         if reply_to:
             payload["reply_to"] = reply_to
 
+        if cc:
+            payload["cc"] = cc
+
+        if bcc:
+            payload["bcc"] = bcc
+
         if attachments:
             payload["attachments"] = attachments
+
+        if email_headers:
+            payload["headers"] = email_headers
+
+        if tags:
+            payload["tags"] = tags
 
         response = requests.post(
             f"{self.base_url}/emails",
@@ -61,20 +81,37 @@ class ResendService:
         original_from: str,
         subject: str,
         html: str,
-        from_email: str = "onboarding@resend.dev"
+        message_id: str,
+        from_email: str = "onboarding@resend.dev",
+        references: Optional[List[str]] = None
     ) -> dict:
         """
-        Reply to an email
+        Reply to an email with proper threading using In-Reply-To and References headers
         """
         # Add "Re: " prefix if not already present
         if not subject.startswith("Re: "):
             subject = f"Re: {subject}"
 
+        # Build email headers for threading
+        email_headers = {
+            "In-Reply-To": message_id
+        }
+
+        # Add References header if there are previous message IDs
+        if references:
+            # Include all previous references and the current message_id
+            all_references = references + [message_id]
+            email_headers["References"] = " ".join(all_references)
+        else:
+            # First reply in thread, just use the message_id
+            email_headers["References"] = message_id
+
         return self.send_email(
             to=[original_from],
             subject=subject,
             html=html,
-            from_email=from_email
+            from_email=from_email,
+            email_headers=email_headers
         )
 
     def get_email(self, email_id: str) -> dict:

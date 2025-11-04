@@ -239,7 +239,7 @@
 
             <form id="composeForm" onsubmit="sendEmail(event)">
                 <div class="form-group">
-                    <label class="form-label" for="to">To</label>
+                    <label class="form-label" for="to">To *</label>
                     <div class="tag-input-container" id="toContainer">
                         <input type="text"
                                class="tag-input"
@@ -252,6 +252,30 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="form-label" for="cc">CC (Optional)</label>
+                    <div class="tag-input-container" id="ccContainer">
+                        <input type="text"
+                               class="tag-input"
+                               id="ccInput"
+                               placeholder="Enter CC email and press Enter"
+                               onkeydown="handleEmailInput(event, 'cc')">
+                    </div>
+                    <input type="hidden" id="ccEmails" name="cc">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="bcc">BCC (Optional)</label>
+                    <div class="tag-input-container" id="bccContainer">
+                        <input type="text"
+                               class="tag-input"
+                               id="bccInput"
+                               placeholder="Enter BCC email and press Enter"
+                               onkeydown="handleEmailInput(event, 'bcc')">
+                    </div>
+                    <input type="hidden" id="bccEmails" name="bcc">
+                </div>
+
+                <div class="form-group">
                     <label class="form-label" for="from">From</label>
                     <input type="email"
                            class="form-input"
@@ -259,11 +283,21 @@
                            name="from_email"
                            placeholder="sender@yourdomain.com"
                            value="">
-                    <div class="form-help">Leave empty to use default sender</div>
+                    <div class="form-help">Leave empty to use default sender from settings</div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="subject">Subject</label>
+                    <label class="form-label" for="replyTo">Reply-To (Optional)</label>
+                    <input type="email"
+                           class="form-input"
+                           id="replyTo"
+                           name="reply_to"
+                           placeholder="reply@yourdomain.com">
+                    <div class="form-help">Email address where replies should be sent</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="subject">Subject *</label>
                     <input type="text"
                            class="form-input"
                            id="subject"
@@ -273,12 +307,22 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="content">Message</label>
+                    <label class="form-label" for="content">Message (HTML) *</label>
                     <textarea class="form-textarea"
                               id="content"
                               name="html_content"
-                              placeholder="Type your message here..."
+                              placeholder="Type your message here... (HTML supported)"
                               required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="textContent">Plain Text Version (Optional)</label>
+                    <textarea class="form-textarea"
+                              id="textContent"
+                              name="text_content"
+                              placeholder="Plain text version of the email..."
+                              style="min-height: 150px;"></textarea>
+                    <div class="form-help">If not provided, a plain text version will be auto-generated from HTML</div>
                 </div>
 
                 <div class="btn-group">
@@ -295,6 +339,8 @@
 
     <script>
         const toEmails = [];
+        const ccEmails = [];
+        const bccEmails = [];
 
         function handleEmailInput(event, type) {
             if (event.key === 'Enter' || event.key === ',') {
@@ -317,46 +363,55 @@
         }
 
         function addEmailTag(email, type) {
-            if (toEmails.includes(email)) {
+            const emailArray = type === 'to' ? toEmails : type === 'cc' ? ccEmails : bccEmails;
+            
+            if (emailArray.includes(email)) {
                 return;
             }
 
-            toEmails.push(email);
-            updateEmailTags();
-            updateHiddenInput();
+            emailArray.push(email);
+            updateEmailTags(type);
+            updateHiddenInput(type);
         }
 
-        function removeEmailTag(email) {
-            const index = toEmails.indexOf(email);
+        function removeEmailTag(email, type) {
+            const emailArray = type === 'to' ? toEmails : type === 'cc' ? ccEmails : bccEmails;
+            const index = emailArray.indexOf(email);
             if (index > -1) {
-                toEmails.splice(index, 1);
-                updateEmailTags();
-                updateHiddenInput();
+                emailArray.splice(index, 1);
+                updateEmailTags(type);
+                updateHiddenInput(type);
             }
         }
 
-        function updateEmailTags() {
-            const container = document.getElementById('toContainer');
-            const input = document.getElementById('toInput');
+        function updateEmailTags(type) {
+            const emailArray = type === 'to' ? toEmails : type === 'cc' ? ccEmails : bccEmails;
+            const containerId = type === 'to' ? 'toContainer' : type === 'cc' ? 'ccContainer' : 'bccContainer';
+            const inputId = type === 'to' ? 'toInput' : type === 'cc' ? 'ccInput' : 'bccInput';
+            
+            const container = document.getElementById(containerId);
+            const input = document.getElementById(inputId);
 
             // Clear existing tags
             const existingTags = container.querySelectorAll('.email-tag');
             existingTags.forEach(tag => tag.remove());
 
             // Add new tags
-            toEmails.forEach(email => {
+            emailArray.forEach(email => {
                 const tag = document.createElement('div');
                 tag.className = 'email-tag';
                 tag.innerHTML = `
                     ${email}
-                    <button type="button" onclick="removeEmailTag('${email}')">&times;</button>
+                    <button type="button" onclick="removeEmailTag('${email}', '${type}')">&times;</button>
                 `;
                 container.insertBefore(tag, input);
             });
         }
 
-        function updateHiddenInput() {
-            document.getElementById('toEmails').value = JSON.stringify(toEmails);
+        function updateHiddenInput(type) {
+            const emailArray = type === 'to' ? toEmails : type === 'cc' ? ccEmails : bccEmails;
+            const hiddenId = type === 'to' ? 'toEmails' : type === 'cc' ? 'ccEmails' : 'bccEmails';
+            document.getElementById(hiddenId).value = JSON.stringify(emailArray);
         }
 
         async function sendEmail(event) {
@@ -374,18 +429,34 @@
             try {
                 const formData = new FormData();
 
-                // Add all to emails
-                toEmails.forEach(email => {
-                    formData.append('to_emails', email);
-                });
+                // Add recipients as JSON
+                formData.append('to_emails', JSON.stringify(toEmails));
+                
+                if (ccEmails.length > 0) {
+                    formData.append('cc', JSON.stringify(ccEmails));
+                }
+                
+                if (bccEmails.length > 0) {
+                    formData.append('bcc', JSON.stringify(bccEmails));
+                }
 
                 const from = document.getElementById('from').value;
                 if (from) {
                     formData.append('from_email', from);
                 }
 
+                const replyTo = document.getElementById('replyTo').value;
+                if (replyTo) {
+                    formData.append('reply_to', replyTo);
+                }
+
                 formData.append('subject', document.getElementById('subject').value);
                 formData.append('html_content', document.getElementById('content').value);
+                
+                const textContent = document.getElementById('textContent').value;
+                if (textContent) {
+                    formData.append('text_content', textContent);
+                }
 
                 const response = await fetch('/api/email/compose', {
                     method: 'POST',

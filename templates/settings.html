@@ -215,7 +215,13 @@
                 <div class="form-group">
                     <label for="resend_api_key">Resend API Key *</label>
                     <input type="text" id="resend_api_key" name="resend_api_key" value="{{ settings.resend_api_key }}" required>
-                    <div class="help-text">Required for sending email replies</div>
+                    <div class="help-text">Required for sending and receiving emails</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="send_from_email">Send From Email Address *</label>
+                    <input type="email" id="send_from_email" name="send_from_email" value="{{ settings.send_from_email or 'onboarding@resend.dev' }}" required>
+                    <div class="help-text">Email address to use when sending replies and composing emails</div>
                 </div>
 
                 <h3 style="margin-top: 24px; margin-bottom: 16px; font-size: 16px; color: #333;">Cloudflare R2 (Optional)</h3>
