@@ -67,6 +67,11 @@ async def index(request: Request, message: Optional[str] = None):
     # Convert ObjectId to string for JSON serialization
     for email in emails:
         email["_id"] = str(email["_id"])
+        # Convert datetime to ISO format
+        if isinstance(email.get("created_at"), datetime):
+            email["created_at"] = email["created_at"].isoformat()
+        if isinstance(email.get("received_at"), datetime):
+            email["received_at"] = email["received_at"].isoformat()
 
     return templates.TemplateResponse(
         "inbox.html",
