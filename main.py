@@ -1,11 +1,12 @@
-from fastapi import FastAPI, Request, HTTPException, Depends, Form
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi import FastAPI, Request, HTTPException, Depends, Form, Query
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 import os
 from dotenv import load_dotenv
+import io
 
 from database import emails_collection, users_collection
 from auth import (
@@ -361,6 +362,156 @@ async def delete_email(request: Request, email_id: str):
         raise HTTPException(status_code=404, detail="Email not found")
 
     return {"status": "success", "message": "Email deleted"}
+
+@app.get("/api/email/{email_id}/content")
+async def get_email_content(request: Request, email_id: str):
+    """
+    Fetch full email content from Resend API
+    """
+    user = require_auth(request)
+
+    try:
+        email_content = resend_service.get_email(email_id)
+        return JSONResponse(email_content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/email/{email_id}/attachments")
+async def get_email_attachments(request: Request, email_id: str):
+    """
+    Get all attachments for a specific email
+    """
+    user = require_auth(request)
+
+    try:
+        attachments = resend_service.get_email_attachments(email_id)
+        return JSONResponse(attachments)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/email/{email_id}/attachments/{attachment_id}/download")
+async def download_attachment(request: Request, email_id: str, attachment_id: str):
+    """
+    Download a specific attachment
+    """
+    user = require_auth(request)
+
+    try:
+        # Get attachment details including download URL
+        attachment_info = resend_service.get_attachment(email_id, attachment_id)
+
+        # Download the attachment content
+        content = resend_service.download_attachment(attachment_info["download_url"])
+
+        # Return as streaming response
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type=attachment_info.get("content_type", "application/octet-stream"),
+            headers={
+                "Content-Disposition": f'attachment; filename="{attachment_info.get("filename", "download")}"'
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/emails/search")
+async def search_emails(
+    request: Request,
+    q: Optional[str] = Query(None, description="Search query"),
+    from_email: Optional[str] = Query(None, description="Filter by sender email"),
+    subject: Optional[str] = Query(None, description="Filter by subject"),
+    is_read: Optional[bool] = Query(None, description="Filter by read status"),
+    has_attachments: Optional[bool] = Query(None, description="Filter emails with attachments")
+):
+    """
+    Search and filter emails
+    """
+    user = require_auth(request)
+
+    # Build MongoDB query
+    query = {}
+
+    # General search across from, subject, and to fields
+    if q:
+        query["$or"] = [
+            {"from": {"$regex": q, "$options": "i"}},
+            {"subject": {"$regex": q, "$options": "i"}},
+            {"to": {"$regex": q, "$options": "i"}}
+        ]
+
+    # Specific filters
+    if from_email:
+        query["from"] = {"$regex": from_email, "$options": "i"}
+
+    if subject:
+        query["subject"] = {"$regex": subject, "$options": "i"}
+
+    if is_read is not None:
+        query["is_read"] = is_read
+
+    if has_attachments:
+        query["attachments"] = {"$exists": True, "$ne": []}
+
+    # Execute query
+    emails = list(emails_collection.find(query).sort("created_at", -1))
+
+    # Convert ObjectId to string
+    for email in emails:
+        email["_id"] = str(email["_id"])
+        # Convert datetime to ISO format
+        if isinstance(email.get("created_at"), datetime):
+            email["created_at"] = email["created_at"].isoformat()
+        if isinstance(email.get("received_at"), datetime):
+            email["received_at"] = email["received_at"].isoformat()
+
+    return JSONResponse({"emails": emails, "count": len(emails)})
+
+@app.post("/api/email/compose")
+async def compose_email(
+    request: Request,
+    to_emails: List[str] = Form(...),
+    subject: str = Form(...),
+    html_content: str = Form(...),
+    cc: Optional[List[str]] = Form(None),
+    bcc: Optional[List[str]] = Form(None),
+    from_email: Optional[str] = Form(None)
+):
+    """
+    Compose and send a new email to specified recipients
+    """
+    user = require_auth(request)
+
+    try:
+        # Use configured from email or default
+        sender_email = from_email if from_email else "onboarding@resend.dev"
+
+        # Send email using Resend
+        result = resend_service.send_email(
+            to=to_emails,
+            subject=subject,
+            html=html_content,
+            from_email=sender_email
+        )
+
+        return JSONResponse({
+            "status": "success",
+            "message": "Email sent successfully",
+            "email_id": result.get("id")
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/compose", response_class=HTMLResponse)
+async def compose_page(request: Request):
+    """
+    Compose new email page
+    """
+    user = require_auth(request)
+
+    return templates.TemplateResponse(
+        "compose.html",
+        {"request": request, "user": user}
+    )
 
 if __name__ == "__main__":
     import uvicorn

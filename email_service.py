@@ -77,4 +77,110 @@ class ResendService:
             from_email=from_email
         )
 
+    def get_email(self, email_id: str) -> dict:
+        """
+        Fetch full email content from Resend API
+        """
+        api_key = self.get_api_key()
+        if not api_key:
+            raise Exception("Resend API key not configured. Please set it in settings.")
+
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+
+        response = requests.get(
+            f"{self.base_url}/emails/receiving/{email_id}",
+            headers=headers
+        )
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Failed to fetch email: {response.text}")
+
+    def list_emails(self, limit: int = 100, has_more: bool = False) -> dict:
+        """
+        List all received emails from Resend API
+        """
+        api_key = self.get_api_key()
+        if not api_key:
+            raise Exception("Resend API key not configured. Please set it in settings.")
+
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+
+        params = {"limit": limit}
+
+        response = requests.get(
+            f"{self.base_url}/emails/receiving",
+            headers=headers,
+            params=params
+        )
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Failed to list emails: {response.text}")
+
+    def get_email_attachments(self, email_id: str) -> dict:
+        """
+        Get all attachments for a specific email
+        """
+        api_key = self.get_api_key()
+        if not api_key:
+            raise Exception("Resend API key not configured. Please set it in settings.")
+
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+
+        response = requests.get(
+            f"{self.base_url}/emails/receiving/{email_id}/attachments",
+            headers=headers
+        )
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Failed to fetch attachments: {response.text}")
+
+    def get_attachment(self, email_id: str, attachment_id: str) -> dict:
+        """
+        Get details for a specific attachment including download URL
+        """
+        api_key = self.get_api_key()
+        if not api_key:
+            raise Exception("Resend API key not configured. Please set it in settings.")
+
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+
+        response = requests.get(
+            f"{self.base_url}/emails/receiving/{email_id}/attachments/{attachment_id}",
+            headers=headers
+        )
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Failed to fetch attachment: {response.text}")
+
+    def download_attachment(self, download_url: str) -> bytes:
+        """
+        Download attachment content from the provided URL
+        """
+        response = requests.get(download_url)
+
+        if response.status_code == 200:
+            return response.content
+        else:
+            raise Exception(f"Failed to download attachment: {response.text}")
+
 resend_service = ResendService()

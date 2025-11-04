@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compose Email - Email Client</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background-color: #f0f0f0;
+            color: #333;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .back-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-info span {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 24px auto;
+            padding: 0 24px;
+        }
+
+        .compose-container {
+            background: white;
+            border-radius: 8px;
+            padding: 32px;
+        }
+
+        .compose-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #333;
+        }
+
+        .form-textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: #333;
+        }
+
+        .form-help {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #000;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #333;
+        }
+
+        .btn-primary:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e0e0e0;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .tag-input-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            padding: 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            min-height: 42px;
+        }
+
+        .tag-input-container:focus-within {
+            border-color: #333;
+        }
+
+        .email-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .email-tag button {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .email-tag button:hover {
+            color: #333;
+        }
+
+        .tag-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            min-width: 150px;
+            padding: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/" class="back-btn">Back to Inbox</a>
+        <div class="user-info">
+            <span>{{ user.username }}</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="compose-container">
+            <h1 class="compose-title">Compose Email</h1>
+
+            <div id="message-container"></div>
+
+            <form id="composeForm" onsubmit="sendEmail(event)">
+                <div class="form-group">
+                    <label class="form-label" for="to">To</label>
+                    <div class="tag-input-container" id="toContainer">
+                        <input type="text"
+                               class="tag-input"
+                               id="toInput"
+                               placeholder="Enter recipient email and press Enter"
+                               onkeydown="handleEmailInput(event, 'to')">
+                    </div>
+                    <div class="form-help">Separate multiple emails by pressing Enter</div>
+                    <input type="hidden" id="toEmails" name="to_emails" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="from">From</label>
+                    <input type="email"
+                           class="form-input"
+                           id="from"
+                           name="from_email"
+                           placeholder="sender@yourdomain.com"
+                           value="">
+                    <div class="form-help">Leave empty to use default sender</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="subject">Subject</label>
+                    <input type="text"
+                           class="form-input"
+                           id="subject"
+                           name="subject"
+                           placeholder="Email subject"
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="content">Message</label>
+                    <textarea class="form-textarea"
+                              id="content"
+                              name="html_content"
+                              placeholder="Type your message here..."
+                              required></textarea>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary" id="sendBtn">
+                        Send Email
+                    </button>
+                    <a href="/" class="btn btn-secondary" style="text-decoration: none; display: inline-flex; align-items: center;">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const toEmails = [];
+
+        function handleEmailInput(event, type) {
+            if (event.key === 'Enter' || event.key === ',') {
+                event.preventDefault();
+                const input = event.target;
+                const email = input.value.trim();
+
+                if (email && isValidEmail(email)) {
+                    addEmailTag(email, type);
+                    input.value = '';
+                } else if (email) {
+                    showMessage('Please enter a valid email address', 'error');
+                }
+            }
+        }
+
+        function isValidEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function addEmailTag(email, type) {
+            if (toEmails.includes(email)) {
+                return;
+            }
+
+            toEmails.push(email);
+            updateEmailTags();
+            updateHiddenInput();
+        }
+
+        function removeEmailTag(email) {
+            const index = toEmails.indexOf(email);
+            if (index > -1) {
+                toEmails.splice(index, 1);
+                updateEmailTags();
+                updateHiddenInput();
+            }
+        }
+
+        function updateEmailTags() {
+            const container = document.getElementById('toContainer');
+            const input = document.getElementById('toInput');
+
+            // Clear existing tags
+            const existingTags = container.querySelectorAll('.email-tag');
+            existingTags.forEach(tag => tag.remove());
+
+            // Add new tags
+            toEmails.forEach(email => {
+                const tag = document.createElement('div');
+                tag.className = 'email-tag';
+                tag.innerHTML = `
+                    ${email}
+                    <button type="button" onclick="removeEmailTag('${email}')">&times;</button>
+                `;
+                container.insertBefore(tag, input);
+            });
+        }
+
+        function updateHiddenInput() {
+            document.getElementById('toEmails').value = JSON.stringify(toEmails);
+        }
+
+        async function sendEmail(event) {
+            event.preventDefault();
+
+            if (toEmails.length === 0) {
+                showMessage('Please add at least one recipient', 'error');
+                return;
+            }
+
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Sending...';
+
+            try {
+                const formData = new FormData();
+
+                // Add all to emails
+                toEmails.forEach(email => {
+                    formData.append('to_emails', email);
+                });
+
+                const from = document.getElementById('from').value;
+                if (from) {
+                    formData.append('from_email', from);
+                }
+
+                formData.append('subject', document.getElementById('subject').value);
+                formData.append('html_content', document.getElementById('content').value);
+
+                const response = await fetch('/api/email/compose', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('Email sent successfully! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    showMessage('Failed to send email: ' + (result.detail || 'Unknown error'), 'error');
+                    sendBtn.disabled = false;
+                    sendBtn.textContent = 'Send Email';
+                }
+            } catch (error) {
+                showMessage('Error sending email: ' + error.message, 'error');
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send Email';
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageContainer = document.getElementById('message-container');
+            messageContainer.innerHTML = `<div class="message ${type}">${text}</div>`;
+
+            // Auto-hide success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    messageContainer.innerHTML = '';
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>

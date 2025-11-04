@@ -151,6 +151,7 @@
         <h1>Inbox</h1>
         <div class="user-info">
             <span>{{ user.username }}</span>
+            <a href="/compose" class="header-btn">Compose</a>
             {% if user.is_admin %}
             <a href="/settings" class="header-btn">Settings</a>
             {% endif %}
@@ -159,7 +160,22 @@
     </div>
 
     <div class="container">
-        <div class="email-list">
+        <div style="background: white; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+            <input type="text" id="searchInput" placeholder="Search emails by sender, subject, or recipient..."
+                   style="width: 100%; padding: 10px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 14px;"
+                   onkeyup="searchEmails()">
+            <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 14px;">
+                    <input type="checkbox" id="filterUnread" onchange="searchEmails()">
+                    Unread only
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; font-size: 14px;">
+                    <input type="checkbox" id="filterAttachments" onchange="searchEmails()">
+                    With attachments
+                </label>
+            </div>
+        </div>
+        <div class="email-list" id="emailList">
             {% if emails %}
                 {% for email in emails %}
                 <a href="/email/{{ email.email_id }}" class="email-item {% if not email.is_read %}unread{% endif %}">
@@ -186,5 +202,84 @@
             {% endif %}
         </div>
     </div>
+
+    <script>
+        let allEmails = {{ emails | tojson }};
+
+        function searchEmails() {
+            const searchQuery = document.getElementById('searchInput').value;
+            const filterUnread = document.getElementById('filterUnread').checked;
+            const filterAttachments = document.getElementById('filterAttachments').checked;
+
+            // Build query parameters
+            const params = new URLSearchParams();
+            if (searchQuery) params.append('q', searchQuery);
+            if (filterUnread) params.append('is_read', 'false');
+            if (filterAttachments) params.append('has_attachments', 'true');
+
+            // Only make API call if there are filters
+            if (params.toString()) {
+                fetch(`/api/emails/search?${params.toString()}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        displayEmails(data.emails);
+                    })
+                    .catch(error => {
+                        console.error('Error searching emails:', error);
+                    });
+            } else {
+                // Show all emails if no filters
+                displayEmails(allEmails);
+            }
+        }
+
+        function displayEmails(emails) {
+            const emailList = document.getElementById('emailList');
+
+            if (emails.length === 0) {
+                emailList.innerHTML = `
+                    <div class="empty-state">
+                        <h2>No emails found</h2>
+                        <p>Try adjusting your search criteria</p>
+                    </div>
+                `;
+                return;
+            }
+
+            emailList.innerHTML = emails.map(email => {
+                const createdAt = new Date(email.created_at);
+                const formattedDate = createdAt.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+
+                const attachmentBadge = email.attachments && email.attachments.length > 0
+                    ? `<span class="badge attachment">${email.attachments.length} attachment(s)</span>`
+                    : '';
+
+                const repliedBadge = email.is_replied
+                    ? '<span class="badge">Replied</span>'
+                    : '';
+
+                return `
+                    <a href="/email/${email.email_id}" class="email-item ${!email.is_read ? 'unread' : ''}">
+                        <div class="email-header">
+                            <div class="email-from">${email.from}</div>
+                            <div class="email-date">${formattedDate}</div>
+                        </div>
+                        <div class="email-subject">${email.subject}</div>
+                        <div class="email-badges">
+                            ${attachmentBadge}
+                            ${repliedBadge}
+                        </div>
+                    </a>
+                `;
+            }).join('');
+        }
+    </script>
 </body>
 </html>
