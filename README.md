@@ -153,17 +153,19 @@ If you prefer running without Docker:
 
 ## Configuration
 
-### Setting Up Resend Webhook
+### Setting Up Resend Inbound Email
 
-After deploying your application, configure Resend to forward emails:
+**Important:** After completing the initial setup, you must configure Resend to forward incoming emails to your webhook endpoint.
 
-1. Go to [Resend Webhooks](https://resend.com/webhooks)
-2. Click **"Add Webhook"**
-3. Enter your webhook URL: `https://your-domain.com/webhook/email`
-4. Select the **"email.received"** event
-5. Click **"Save"**
+1. Set up inbound routing in your [Resend Dashboard](https://resend.com/inbound)
+   - See the [Resend Receiving Documentation](https://resend.com/docs/dashboard/receiving/introduction) for detailed instructions
+2. Go to [Resend Webhooks](https://resend.com/webhooks)
+3. Click **"Add Webhook"**
+4. Enter your webhook URL: `https://your-domain.com/webhook/email`
+5. Select the **"email.received"** event
+6. Click **"Save"**
 
-Now all emails sent to your Resend domain will be forwarded to your email client.
+**Your webhook URL must be publicly accessible** for Resend to send emails to your client. All emails sent to your configured Resend inbound email addresses will now be forwarded to your email client.
 
 ### Configuring API Keys
 

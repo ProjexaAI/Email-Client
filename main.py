@@ -113,7 +113,7 @@ async def setup(
     }
     request.session["is_authenticated"] = True
 
-    return RedirectResponse("/settings")
+    return RedirectResponse("/")
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request, message: Optional[str] = None):
