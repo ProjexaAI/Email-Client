@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  email-client:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - SECRET_KEY=${SECRET_KEY}
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - ./templates:/app/templates
+
+# Note: Resend API and Cloudflare R2 credentials are configured
+# through the web interface after initial setup

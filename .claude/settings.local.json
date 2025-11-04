@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(if exist .git rmdir /s /q .git)",
+      "Bash(if [ -d \"C:/Users/conta/Desktop/Projexa Email/.git\" ])",
+      "Bash(then rm -rf \"C:/Users/conta/Desktop/Projexa Email/.git\")",
+      "Bash(else echo \"No git folder found\")",
+      "Bash(fi)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
