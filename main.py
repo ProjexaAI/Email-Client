@@ -64,18 +64,25 @@ async def index(request: Request, message: Optional[str] = None):
     # Get all emails sorted by date
     emails = list(emails_collection.find().sort("created_at", -1))
 
-    # Convert ObjectId to string for JSON serialization
+    # Keep datetime objects for server-side template rendering (so strftime works),
+    # but prepare a JSON-serializable copy for client-side JavaScript.
+    serializable_emails = []
     for email in emails:
+        # Ensure _id is a string for templates
         email["_id"] = str(email["_id"])
-        # Convert datetime to ISO format
-        if isinstance(email.get("created_at"), datetime):
-            email["created_at"] = email["created_at"].isoformat()
-        if isinstance(email.get("received_at"), datetime):
-            email["received_at"] = email["received_at"].isoformat()
+
+        # Create a shallow copy and convert datetimes to ISO strings for JS
+        ser = email.copy()
+        if isinstance(ser.get("created_at"), datetime):
+            ser["created_at"] = ser["created_at"].isoformat()
+        if isinstance(ser.get("received_at"), datetime):
+            ser["received_at"] = ser["received_at"].isoformat()
+
+        serializable_emails.append(ser)
 
     return templates.TemplateResponse(
         "inbox.html",
-        {"request": request, "user": user, "emails": emails}
+        {"request": request, "user": user, "emails": emails, "emails_json": serializable_emails}
     )
 
 @app.get("/setup", response_class=HTMLResponse)

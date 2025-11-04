@@ -204,7 +204,8 @@
     </div>
 
     <script>
-        let allEmails = {{ emails | tojson }};
+    // Use the JSON-serializable copy from the server for client-side operations
+    let allEmails = {{ emails_json | tojson }};
 
         function searchEmails() {
             const searchQuery = document.getElementById('searchInput').value;
